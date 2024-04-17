@@ -48,12 +48,13 @@ const ascii_type char_type[128] =
     };
 
 typedef struct pstr {
-    int n;
+    size_t n;
+    size_t max;
     char* str;
 }pstr;
 
 pstr pstr_new() {
-    return (pstr){0, malloc(PSTR_MIN_SIZE)};
+    return (pstr){0, PSTR_MIN_SIZE, malloc(PSTR_MIN_SIZE)};
 }
 
 _Bool pstr_free(pstr* s) {
@@ -73,7 +74,13 @@ ascii_type cstr_type(char *s) { //return compund type?
     return compound_type;
 }
 
+_Bool valid_char(char c) {
+    return char_type[c] != NON_VALID;
+}
+
 _Bool valid_cstr(char *s) {
+    if(s == NULL)
+        return false;
     int i;
     char *head;
     for(i = 0, head = s; *head; i++, head++) { // check length
@@ -83,17 +90,28 @@ _Bool valid_cstr(char *s) {
     return cstr_type(s) != NON_VALID;
 }
 
-_Bool valid_char(char c) {
-    return char_type[c] != NON_VALID;
-}
-
 pstr cstr_to_p(char* s) {
-    if(s == NULL)
+    if(!valid_cstr(s))
         return pstr_new();
-    int size = strlen(s);
+    size_t slen = strlen(s);
+    size_t s_max;
+    char *str;
+    //MSB
+    int msb = 0;
+    for(int temp = slen; temp; temp >>= 1)
+        msb++;
+    s_max = 1 << msb + 1;
+    str = malloc(s_max);
+    memcpy(str, s, slen);
+    return (pstr){slen, s_max, str};
 }
 
-//char* pstr_to_c() {}
+char* pstr_to_c(pstr s) {
+    char *cstr = malloc(s.n + 1);
+    memcpy(cstr, s.str, s.n);
+    cstr[s.n] = '\0';
+    return cstr;
+}
 
 /*int pstr_cmp(pstr str1, pstr str2) { //CAUTION: same behavior as strcmp() 
                                      //HOWEVER upper < lower, ie. pstr_cmp("A","a") -> -1
