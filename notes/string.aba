@@ -1,0 +1,7 @@
+type CString (
+    string: vec<u8>
+){
+    .from(s: String){
+        .init(s.n +1)
+    }
+}

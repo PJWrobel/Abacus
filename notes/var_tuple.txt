@@ -1,0 +1,25 @@
+variable tuple length and types
+
+denoted with '?'
+compile time checking
+
+
+
+in context of print(), print[0] returns the second parameter of the tuple. Indexing starts at the '?'
+example: print("there are {} {}", 4, "lights")
+
+format(fmt: &Str, ?) -> &Str {
+    str = String::new
+    prev = 0
+    for (i,index) in fmt.find_all("{}") {
+        str.append(fmt[prev..index])
+           .append(format.args[i]) //implicit format.args[i].to_string()
+        prev = index + 2;
+    }
+    str.append(fmt[prev..])
+    -> str
+}
+
+print(fmt: &Str, ?) {
+    fprint(stdout, fmt, print.args)
+}

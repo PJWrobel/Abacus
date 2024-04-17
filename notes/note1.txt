@@ -1,0 +1,45 @@
+Abacus: a low-level language built for the modern age of productivity and ease of use
+
+- Easily compile to C
+- Methods
+- modern types: algebraic (tuples), iterators, first class functions
+- built-in strings
+- generics, traits
+- safe memory management, implicit free for certain patterns, GC when patrterns can not be proven, smart pointers for -GC:none, raw pointers available and treated same but without memory checks
+- intuitive error handling and default null safety, strongly based off rust: Option<>, Result, Panic(), Expect(), "?" features
+- easy C library imports, hopefully dynamic linking implemented
+- syntax based off Rust, C, Go, Nim
+
+Features ranging from most important to nice-to-haves
+
+1. Structures: easily translatable to C, '.' implilcitly representing "this".
+    "def", "type", "struct" keyword use? 
+
+    Go: 
+        type rectangle struct {
+            length  float64
+            breadth float64
+            color   string
+        }
+
+    Rust: 
+        struct User {
+            active: bool,
+            username: String,
+            email: String,
+            sign_in_count: u64,
+        }
+
+    Nim: 
+        type
+          Student = object
+            name: string
+            age: int
+
+    C:
+        typedef struct {
+            double length;
+            double width;
+        } Rect;
+
+

@@ -1,0 +1,9 @@
+#include <stdio.h>
+
+def in {
+    def get_line() -> Str {
+        buffer: CStr[100]   // char buffer[100]
+        scanf("%s", buffer) // "%s" -> const Str -> CStr, buffer of type &char[100], no ownership?
+        if()
+    }
+}

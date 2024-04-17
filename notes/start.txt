@@ -1,0 +1,252 @@
+a := 5 //i32 implicit
+b: i16 = 6 //similar to golang
+c: char = 'a'
+d: u32 = 'd' //implicit cast from char to u32
+buffer := "Hello!" //buffer is of type const char[], mutating const results in error, has member .n useable for compile-time
+buffer: [20] = "Hello" //implicit conversion to a mutable arr on stack, also works with buffer[]
+buffer: * = "Hello" //heap allocated, null terminated, .n returns sizeof(*char)
+string: String = "Hello" //stack struct {arr: *char, strlen: int, n: int} arr on heap
+s: Str = "Hello" //stack struct {arr: *char, n} n is always implicitly a size_t
+arr := ([5]){0} //([5]) is a cast of {} to a generic array of 5 items with type ([]){T}
+arr2 := ([]){[1..5] = 0} //arr2.n is the largest index initialized +1 (5) when the array size is not given
+arr3: [] = {'a'}; //type [] is defined therefore no := (define as). 
+
+interesting, generic casts.
+
+The compiler operates on multiple passes, (p_clean,p_syn,p_...)
+
+---------Types---------
+
+built-in data types:
+    i8, i16, i32, i64
+    u8, u16, u32, u64
+    f16, f32, f64
+    Err, int //should I add these as standard?
+    char, String, str //String := [arr_size: int, resizeable_arr: [char], n: u32]
+
+'.': Self
+'T': Generic
+'V': Void
+'E': Enum
+'TU': Tuple
+
+container types
+
+{}:
+Behaves as an enum when no types are associated:
+state := E{
+  slow, 
+  fast, 
+  idle,
+  dead //comma at end?
+};
+
+Behaves as a type when all states are of one type:
+
+move := {
+  up(vec3),
+  down(vec3),
+  left(vec3),
+  right(vec3)
+};
+
+ip_version := {iPv4,iPv6}; 
+
+(): Tuple
+() behaves as a TODO
+(oneType) behaves as that type, can be used as a cast
+pow -> (Ret, Err) {}
+
+[]: "container" type, [0..10] range type? for i in [0..10] {
+  arr: [5]<i32> //5 i32's are contained within
+
+  User := [ //multiple types contained within, basically a struct. Different from tuple ()
+    name: String,
+    email: String,
+    id: u32
+  ];
+  User u1 = [
+    name = "Harrold",  
+    id = 5
+  ]
+<>:
+every function and type is a definition and all definitions have methods, methods can be used as traits such as:
+A function is only a class of methods
+
+-------------methods--------------
+
+def User<T>: (
+        id: u32,
+        name: String,
+        email: String,
+        item: T
+        _FIELDS: 
+    ) {
+    .toStr -> str {
+        return "Name: " + name + ", id: " + id; // '\0' implicit?
+    }
+    .__init__ -> self {}
+    ._n -> sizeof(User)//;?
+    ._ref -> int; //number of references contained in type i.e. User<i32>._ref = 2 because of name and email
+    ._T -> T; //typeof(T)
+    ._clone -> (&.T){[.FIELDS]}// := returns reference of self type, copies all fields to new reference
+    ._copy -> .; // := copies the underlying value of type T and returns it
+}
+
+
+let user create new in-built methods? Would allow String to be implemented in the std library
+
+-----------comparators------------
+
+if str1 > str2
+
+def str: (
+        slice: [char],
+        n //implicitly size_t
+    ) {
+    impl <==> {}
+}
+
+----------declarations------------
+
+arr: i32[5] = {0}; //or {1}, {[0..4] = 2, [4] = 3}, {} TODO: [] ranges
+arr = [5]; // == [0..5] == (0,1,2,3,4)
+alpha = ['a'..'z']; //type char[26] is implicit
+arr: [10] = {rand() % 10}; //will inherit type of rand() (u64)
+u1: User = User::init;
+p1: *;  // raw void pointer, can be *<void>, immutable
+p2: *!; // mutable raw pointer, unsafe
+p3: *$; // smart pointer, reference counting
+p4: *#; // garbage collected pointer
+r1: &;
+r2: &!;
+r3: &$;
+r4: &#;
+
+
+------------syntaxes--------------
+
+A syntax $ can be implemented so to make a sort of metaprogramming
+
+def name<type>$
+
+def char: u8 {
+    impl $ { //implements a syntax where self ()
+        
+    }
+    
+}
+def String: (...) {
+    impl new { //self always available
+    }
+    impl $ "S|T" -> Option<S> { //S is self typename, ie String, T is some other type we can use to match(T)
+        var return: Option<S>; //this line is implicit
+    }
+	match T {
+	    str:
+		
+	    &str:
+	    char:
+	}
+}
+
+An "S|T" would mean any edge '|' of rudimentary containers S preceeding T ie. (S)T,S(T),{S}(T),S T
+
+Could make a call
+
+def i32 {
+    impl $ S?T"[S]==[T]" -> bool { //type profiles: S?T: can be "S,T", "T,S", or "S,S" but not "T,T"
+        return = !(bool)(S ^ T); //? do generics implicitly call their type?
+	} //remember {is an enum}.
+    }
+    impl bool { //type not specified but because it already implements the type "bool", 
+ 	
+}
+
+5.bool
+(bool)5
+bool 5
+5(bool)
+
+
+def bool(u64) { 
+}
+
+impl run -> { //where we are implementing on def main -> i32 {}
+    
+}
+     
+}
+
+n = 5.if //brain tease
+
+def if {
+    impl $cond "S G E" -> G.bool! { //can name syntaxes to be used in later impl blocks
+	true: E,
+	false: 0
+    }
+    impl else {
+        impl $ "if.cond|else|if|G|E" -> if.cond ? E; //where if.cond is a syntax the compiler matches and reduces to.
+						   //if.cond? is the shorthand ternary operator if.cond ? if.cond : 0; !if.cond? is shorthand if.cond ? 0 : if.cond;
+	impl $ "if.cond|else|E" -> 
+    }
+}
+
+if('5' == 5) {
+    doSomething();
+    doSomethingElse();
+} else if 5 {
+    
+} else {
+
+}
+
+enumeration of syntax matches?
+
+if 1 > 5 {
+    
+}
+
+def while {
+    impl $
+}
+
+(if
+)
+
+def hash_map<T,K> (
+        
+    ) {
+    def hash(key: K) -> u64 {
+        
+    }
+}
+
+{},(), and whitespace can be used as "containers". They return what the inner reduces to
+
+{}
+
+() can be reduced only to a tuple if using commas
+
+every type is defined
+
+casts can be made implicit
+
+Option<T>: {
+    None: V, //": V" is implicit
+    Some: T
+}; //{None, Some|T} is an enum (0,1|T) where Option|T is reduced to a u64 followed by a C union of the largest enum contained type size, 
+as opposed to a tuple (Some,T), None) which would mean 
+
+main() {
+    println( 1+2+3+"Hello " + "World" + '!' + num ); //order of operation? What if we implemented -,*,/,..?
+}
+
+def task()
+
+------memcpy() implicitly-------
+
+char str[30];
+
+str = "Hello ";//{'H','e','l','l','o',' ','\0'} decays to char[7] Discrepancy between array and reference?
+str[str.n] = "World!"; //implicit memcpy()
