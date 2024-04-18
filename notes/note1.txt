@@ -1,6 +1,6 @@
 Abacus: a low-level language built for the modern age of productivity and ease of use
 
-- Easily compile to C
+- Intuitive compilation to C
 - Methods
 - modern types: algebraic (tuples), iterators, first class functions
 - built-in strings
@@ -11,35 +11,22 @@ Abacus: a low-level language built for the modern age of productivity and ease o
 - syntax based off Rust, C, Go, Nim
 
 Features ranging from most important to nice-to-haves
-
+i
 1. Structures: easily translatable to C, '.' implilcitly representing "this".
-    "def", "type", "struct" keyword use? 
 
-    Go: 
-        type rectangle struct {
-            length  float64
-            breadth float64
-            color   string
-        }
-
-    Rust: 
-        struct User {
-            active: bool,
-            username: String,
-            email: String,
-            sign_in_count: u64,
-        }
-
-    Nim: 
-        type
-          Student = object
-            name: string
-            age: int
-
-    C:
-        typedef struct {
-            double length;
-            double width;
-        } Rect;
-
-
+    struct User (
+        active: bool,          rust-like syntax, parentesis over brackets for field definitions
+        username: String,      shallow and deep copies implementable
+        email: String,         
+        sign_in_count: u64,    directly translates to C
+    ){
+        .new() -> User {...}   methods implemented with '.' prefix
+        .update() {...}
+        .FREE() {...}          language defined functions in UPPERCASE
+        .TO<Str> {...}         called implicitly when used in print functions
+        .TO<Str> {...}          debugging tools built in
+    }
+2.Generics: 
+    add(a: T, b: T) -> T { implicit trait use
+        -> a + b;
+    }
