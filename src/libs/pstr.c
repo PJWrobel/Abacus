@@ -1,6 +1,7 @@
 /*
 pstr.c 
 custom dynamic c string library
+relies on no free of memory, program runs once. only for bootstrap build
 */
 
 #include <stdio.h>
@@ -64,6 +65,10 @@ _Bool pstr_free(pstr* s) {
     return true;
 }
 
+void pstr_print(pstr s) {
+    printf("%.*s.\n", (int)s.n, s.str);
+}
+
 ascii_type cstr_type(char *s) { //return compund type?
     ascii_type compound_type = 0;
     for(;*s;s++) {
@@ -96,11 +101,14 @@ pstr cstr_to_p(char* s) {
     size_t slen = strlen(s);
     size_t s_max;
     char *str;
-    //MSB
-    int msb = 0;
-    for(int temp = slen; temp; temp >>= 1)
-        msb++;
-    s_max = 1 << msb + 1;
+    if(slen < 8) {
+        smax = 8;
+    } else { //MSB
+        int msb = 0;
+        for(int temp = slen; temp; temp >>= 1)
+            msb++;
+        s_max = 1 << (msb + 1);
+    }
     str = malloc(s_max);
     memcpy(str, s, slen);
     return (pstr){slen, s_max, str};
@@ -123,18 +131,25 @@ pstr pstr_copy(pstr s) {
 }
 
 pstr pstr_slice(pstr s, int head, int tail) {
-
+    int diff = tail - head;
+    int msb = 0;
+    for(int msb_mask = diff; msb_mask; msb_mask >>= 1)
+        msb++;
+    msb = 1 << (msb+1);
+    int pstr_new = malloc(msb);
+    memcpy()
+    return (pstr){diff, };
 }
 
 pstr pstr_remove_whitespace(pstr s) {
-    if(char_type[*s.str] & WHITESPACE == 0) {
+    if(char_type[*s.str] & WHITESPACE == 0)
         if(char_type[s.str[s.n-1]] & WHITESPACE == 0)
             return s;
     int head;
     int tail;
     for(head = 0; char_type[s.str[head]] & WHITESPACE; head++);
-    for(tail = s.n-1; char_type[s.str[tail]] & WHITESPACE; tail--);
-
+    for(tail = s.n-1; char_type[s.str[tail]] & WHITESPACE; tail--)
+    
     return pstr_slice(s, head, tail);
 }
 
@@ -196,12 +211,15 @@ int pstr_cmp(pstr str1, pstr str2) { //CAUTION: same behavior as strcmp()
     return ~0; //ERROR
 }
 
-void pstr_print(pstr s) {
-    printf("%.*s\n", s.n, s.str);
-}
 
 int main() { // testing
-    char *mystr1 = "!@#$%^&*()";
+    char *mystr1 = "Hello World! ";
     char *mystr2 = "Hello World!";
     char *mystr3 = "`1234567890-=qwertyuiop[]asdfghjkl;'zxcvbnm,./~!@#$%^&*()_+QWERTYUIOP{}ASDFGHJKL:|ZXCVBNM<>?";
+    pstr s1 = cstr_to_p(mystr1);
+    pstr s2 = cstr_to_p(mystr2);
+    pstr_print(pstr_remove_whitespace(s1));
+    pstr_print(s2);
+    printf("%s\n", pstr_cmp(s1,s2) ? "false" : "true");
+    return 0;
 }
