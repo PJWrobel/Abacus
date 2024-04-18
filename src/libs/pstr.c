@@ -15,7 +15,7 @@ custom dynamic c string library
 
 typedef enum ascii_type { //value used for field mask compatibility. DO NOT TOUCH. powers if 2 are masks
     null_char = 0,
-    numeric = 9,
+    digit = 9,
     lower = 13,
     upper = 15,
     whitespace_formatter = 49,
@@ -34,7 +34,7 @@ typedef enum ascii_type { //value used for field mask compatibility. DO NOT TOUC
 const ascii_type char_type[128] = 
     { ['A'...'Z'] = upper,
       ['a'...'z'] = lower,
-      ['0'...'9'] = numeric,
+      ['0'...'9'] = digit,
       ['!'...'/'] = symbol,
       [':'...'@'] = symbol,
       ['['...'`'] = symbol,
@@ -113,8 +113,36 @@ char* pstr_to_c(pstr s) {
     return cstr;
 }
 
-/*int pstr_cmp(pstr str1, pstr str2) { //CAUTION: same behavior as strcmp() 
+pstr pstr_copy(pstr s) {
+    while(s.n < s.max/2)
+        s.max /= 2;
+    char *new_str = malloc(s.max);
+    memcpy(new_str, s.str, s.n);
+    s.str = new_str;
+    return s; //copy of all other fields
+}
+
+pstr pstr_slice(pstr s, int head, int tail) {
+
+}
+
+pstr pstr_remove_whitespace(pstr s) {
+    if(char_type[*s.str] & WHITESPACE == 0) {
+        if(char_type[s.str[s.n-1]] & WHITESPACE == 0)
+            return s;
+    int head;
+    int tail;
+    for(head = 0; char_type[s.str[head]] & WHITESPACE; head++);
+    for(tail = s.n-1; char_type[s.str[tail]] & WHITESPACE; tail--);
+
+    return pstr_slice(s, head, tail);
+}
+
+int pstr_cmp(pstr str1, pstr str2) { //CAUTION: same behavior as strcmp() 
                                      //HOWEVER upper < lower, ie. pstr_cmp("A","a") -> -1
+    str1 = pstr_remove_whitespace(str1);
+    str2 = pstr_remove_whitespace(str2);
+
     char *a = str1.str;
     char *b = str2.str;
 
@@ -124,10 +152,53 @@ char* pstr_to_c(pstr s) {
         return -1;
     else if(!b)
         return 1;
-    }
     
-    //map 
-}*/
+    for(; *a == *b; a++, b++) {
+        if(*a == '\0')
+            return 0;
+        //TODO: iterates over symbols
+    }
+    if(*a == '\0')
+        return -1;
+    if(*b == '\0')
+        return 1;
+
+    ascii_type atype = char_type[*a];
+    ascii_type btype = char_type[*b];
+    
+    if(atype & ALPHANUMERIC == false && btype & ALPHANUMERIC == false)
+        return 0;
+    if(atype & ALPHANUMERIC == false)
+        return -1;
+    if(btype & ALPHANUMERIC == false)
+        return 1;
+    if(atype == btype)
+        return *a - *b;
+    if(atype == digit)
+        return -1;
+    if(btype == digit)
+        return 1;
+    //both alpha
+    char a_c = *a;
+    char b_c = *b;
+    if(atype == upper){
+        a_c = a_c - 'A' + 'a';
+        if(a_c == b_c)
+            return -1;
+        return a_c - b_c;
+    }    
+    if(btype == upper){
+        b_c = b_c - 'A' + 'a';
+        if(a_c == b_c)
+            return 1;
+        return a_c - b_c;
+    }
+    return ~0; //ERROR
+}
+
+void pstr_print(pstr s) {
+    printf("%.*s\n", s.n, s.str);
+}
 
 int main() { // testing
     char *mystr1 = "!@#$%^&*()";
