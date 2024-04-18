@@ -66,7 +66,16 @@ _Bool pstr_free(pstr* s) {
 }
 
 void pstr_print(pstr s) {
-    printf("%.*s.\n", (int)s.n, s.str);
+    printf("%.*s\n", (int)s.n, s.str);
+}
+
+int pstr_msb(int n) { //most significant bit
+    if(n <= 8)
+        return 8;
+    int msb = 0;
+    for(;n;n >>= 1)
+        msb++;
+    return 1 << msb;
 }
 
 ascii_type cstr_type(char *s) { //return compund type?
@@ -98,20 +107,14 @@ _Bool valid_cstr(char *s) {
 pstr cstr_to_p(char* s) {
     if(!valid_cstr(s))
         return pstr_new();
-    size_t slen = strlen(s);
-    size_t s_max;
+    
+    size_t s_len = strlen(s);
+    size_t s_max = pstr_msb(s_len);
     char *str;
-    if(slen < 8) {
-        smax = 8;
-    } else { //MSB
-        int msb = 0;
-        for(int temp = slen; temp; temp >>= 1)
-            msb++;
-        s_max = 1 << (msb + 1);
-    }
+    
     str = malloc(s_max);
-    memcpy(str, s, slen);
-    return (pstr){slen, s_max, str};
+    memcpy(str, s, s_len);
+    return (pstr){s_len, s_max, str};
 }
 
 char* pstr_to_c(pstr s) {
@@ -131,14 +134,11 @@ pstr pstr_copy(pstr s) {
 }
 
 pstr pstr_slice(pstr s, int head, int tail) {
-    int diff = tail - head;
-    int msb = 0;
-    for(int msb_mask = diff; msb_mask; msb_mask >>= 1)
-        msb++;
-    msb = 1 << (msb+1);
-    int pstr_new = malloc(msb);
-    memcpy()
-    return (pstr){diff, };
+    int len = tail - head;
+    int max = pstr_msb(len);
+    char *new = malloc(max);
+    memcpy(new, s.str + head, len);
+    return (pstr){len, max, new};
 }
 
 pstr pstr_remove_whitespace(pstr s) {
@@ -153,73 +153,80 @@ pstr pstr_remove_whitespace(pstr s) {
     return pstr_slice(s, head, tail);
 }
 
-int pstr_cmp(pstr str1, pstr str2) { //CAUTION: same behavior as strcmp() 
+int pstr_cmp(pstr s1, pstr s2) { //CAUTION: same behavior as strcmp() 
                                      //HOWEVER upper < lower, ie. pstr_cmp("A","a") -> -1
-    str1 = pstr_remove_whitespace(str1);
-    str2 = pstr_remove_whitespace(str2);
+    s1 = pstr_remove_whitespace(s1);
+    s2 = pstr_remove_whitespace(s2);
 
-    char *a = str1.str;
-    char *b = str2.str;
+    char *p1 = s1.str;
+    char *p2 = s2.str;
 
-    if(!a && !b)
+    if(!p1 && !p2)
         return 0;
-    else if(!a)
+    else if(!p1)
         return -1;
-    else if(!b)
+    else if(!p2)
         return 1;
     
-    for(; *a == *b; a++, b++) {
-        if(*a == '\0')
-            return 0;
-        //TODO: iterates over symbols
+    for(; *p1 == *p2; p1++, p2++) {
+        ascii_type type = char_type[*p1];
+        if(type & VALID == 0)
     }
-    if(*a == '\0')
-        return -1;
-    if(*b == '\0')
-        return 1;
-
-    ascii_type atype = char_type[*a];
-    ascii_type btype = char_type[*b];
     
-    if(atype & ALPHANUMERIC == false && btype & ALPHANUMERIC == false)
+    char c1 = *p1;
+    char c2 = *p2;
+
+    ascii_type type1 = char_type[c1];
+    ascii_type type2 = char_type[c2];
+
+    if(type1 & VALID == 0)
+        return -2;
+    if(type2 & VALID == 0)
+        return 2;
+    if(type1 & ALPHANUMERIC == false && type2 & ALPHANUMERIC == false)
         return 0;
-    if(atype & ALPHANUMERIC == false)
-        return -1;
-    if(btype & ALPHANUMERIC == false)
-        return 1;
-    if(atype == btype)
-        return *a - *b;
-    if(atype == digit)
-        return -1;
-    if(btype == digit)
-        return 1;
+    if(type1 & ALPHANUMERIC == false)
+        return -3;
+    if(type2 & ALPHANUMERIC == false)
+        return 3;
+    if(type1 == type2)
+        return c1 - c2;
+    if(type1 == digit)
+        return -4;
+    if(type2 == digit)
+        return 4;
     //both alpha
-    char a_c = *a;
-    char b_c = *b;
-    if(atype == upper){
-        a_c = a_c - 'A' + 'a';
-        if(a_c == b_c)
-            return -1;
-        return a_c - b_c;
+    if(type1 == upper){
+        c1 = c1 - 'A' + 'a';
+        if(c1 == c2)
+            return -5;
+        return c1 - c2;
     }    
-    if(btype == upper){
-        b_c = b_c - 'A' + 'a';
-        if(a_c == b_c)
-            return 1;
-        return a_c - b_c;
+    if(type2 == upper){
+        c2 = c2 - 'A' + 'a';
+        if(c1 == c2)
+            return 5;
+        return c1 - c2;
     }
-    return ~0; //ERROR
+    printf("%d:%d\n",type1,type2);
+    return -50; //ERROR
 }
 
+pstr pstr_concat(pstr s1, pstr s2) {
+    int len = s1.n + s2.n;
+    int max = pstr_msb(len);
+    char *str = malloc(max);
+    memcpy(str, s1.str, s1.n);
+    memcpy(str + s1.n, s2.str, s2.n);
+    return (pstr){len,max,str};
+}
 
 int main() { // testing
-    char *mystr1 = "Hello World! ";
-    char *mystr2 = "Hello World!";
+    char *mystr1 = "     Hello World! ";
+    char *mystr2 = "Hello World";
     char *mystr3 = "`1234567890-=qwertyuiop[]asdfghjkl;'zxcvbnm,./~!@#$%^&*()_+QWERTYUIOP{}ASDFGHJKL:|ZXCVBNM<>?";
     pstr s1 = cstr_to_p(mystr1);
     pstr s2 = cstr_to_p(mystr2);
-    pstr_print(pstr_remove_whitespace(s1));
-    pstr_print(s2);
-    printf("%s\n", pstr_cmp(s1,s2) ? "false" : "true");
-    return 0;
+    printf("%d\n", pstr_cmp(s1,s2));
+
 }
