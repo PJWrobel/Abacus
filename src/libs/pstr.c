@@ -142,9 +142,8 @@ pstr pstr_slice(pstr s, int head, int tail) {
 }
 
 pstr pstr_remove_whitespace(pstr s) {
-    if(char_type[*s.str] & WHITESPACE == 0)
-        if(char_type[s.str[s.n-1]] & WHITESPACE == 0)
-            return s;
+    if((char_type[*s.str] & WHITESPACE == 0) && (char_type[s.str[s.n-1]] & WHITESPACE == 0))
+        return s;
     int head;
     int tail;
     for(head = 0; char_type[s.str[head]] & WHITESPACE; head++);
@@ -158,58 +157,41 @@ int pstr_cmp(pstr s1, pstr s2) { //CAUTION: same behavior as strcmp()
     s1 = pstr_remove_whitespace(s1);
     s2 = pstr_remove_whitespace(s2);
 
-    char *p1 = s1.str;
-    char *p2 = s2.str;
+    int i;
 
-    if(!p1 && !p2)
-        return 0;
-    else if(!p1)
-        return -1;
-    else if(!p2)
-        return 1;
-    
-    for(; *p1 == *p2; p1++, p2++) {
-        ascii_type type = char_type[*p1];
-        if(type & VALID == 0)
+    for(i=0; s1.str[i] == s2.str[i]; i++) {
+        if(s1.n <= i || s2.n <= i) {
+            if(s1.n == i && s2.n == i)
+                return 0;
+            if(s1.n == i)
+                return -1;
+            if(s2.n == i)
+                return 1;
+        }
+        if(char_type[s1.str[i]] & ALPHANUMERIC == 0 &&
+           char_type[s1.str[i]] & SPECIAL == 0)
+            return 0;
     }
-    
-    char c1 = *p1;
-    char c2 = *p2;
+    // is VALID and not end of strings
 
-    ascii_type type1 = char_type[c1];
-    ascii_type type2 = char_type[c2];
-
-    if(type1 & VALID == 0)
-        return -2;
-    if(type2 & VALID == 0)
-        return 2;
-    if(type1 & ALPHANUMERIC == false && type2 & ALPHANUMERIC == false)
-        return 0;
-    if(type1 & ALPHANUMERIC == false)
-        return -3;
-    if(type2 & ALPHANUMERIC == false)
-        return 3;
-    if(type1 == type2)
-        return c1 - c2;
-    if(type1 == digit)
-        return -4;
-    if(type2 == digit)
-        return 4;
-    //both alpha
-    if(type1 == upper){
-        c1 = c1 - 'A' + 'a';
-        if(c1 == c2)
-            return -5;
-        return c1 - c2;
-    }    
-    if(type2 == upper){
-        c2 = c2 - 'A' + 'a';
-        if(c1 == c2)
-            return 5;
-        return c1 - c2;
+    char sort_precedence(char c) { // {space,symbol,[2..11] = '0'..'9',A,a,B,b,C,c...}
+        switch(char_type[c]) {
+            case lower:
+                return (c - 'a') * 2 + 13;
+            case upper:
+                return (c - 'A') * 2 + 12;
+            case digit:
+                return (c - '0') + 2;
+            case symbol:
+                return 1;
+            case space:
+                return 0;
+            default:
+                fprintf(stderr, "Error: sort_precedence(char) incompatable type");
+                return 0;
+        }
     }
-    printf("%d:%d\n",type1,type2);
-    return -50; //ERROR
+    return sort_precedence(s1.str[i]) - sort_precedence(s2.str[i]);
 }
 
 pstr pstr_concat(pstr s1, pstr s2) {
