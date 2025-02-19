@@ -1,7 +1,7 @@
 /*
 pstr.c 
-custom dynamic c string library
-relies on no free of memory, program runs once. only for bootstrap build
+custom static C string library
+relies on aba's allocator, program runs once. only for bootstrap build
 */
 
 #include <stdio.h>
@@ -9,27 +9,27 @@ relies on no free of memory, program runs once. only for bootstrap build
 #include <string.h>
 #include <stdbool.h>
 
-//#include "abautils.h"
+#include "abautils.h"
 
-#define PSTR_MIN_SIZE 8 //some 2^n
+#define PSTR_MIN_SIZE 8 //some 2^x
 #define CSTR_MAX_LEN 1000
 
-typedef enum ascii_type { //value used for field mask compatibility. DO NOT TOUCH. powers if 2 are masks
-    null_char = 0,
-    digit = 9,
-    lower = 13,
-    upper = 15,
-    whitespace_formatter = 49,
-    symbol = 65,
-    space = 97,
+typedef enum ascii_type { //value used for field mask compatibility. DO NOT TOUCH. powers of 2 are masks
+    null_char = 0,              // 0000.0000
+    digit = 9,                  // 0000.1001
+    lower = 13,                 // 0000.1101
+    upper = 15,                 // 0000.1111
+    whitespace_formatter = 49,  // 0011.0001
+    symbol = 65,                // 0100.0001
+    space = 97,                 // 0110.0001
 //----masks----
-    VALID = 1,
-    ALPHA = 4,
-    ALPHANUMERIC = 8,
-    FORMAT = 16,
-    WHITESPACE = 32,
-    SPECIAL = 64,
-    NON_VALID = 128
+    VALID = 1,                  // 0000.0001
+    ALPHA = 4,                  // 0000.0100
+    ALPHANUMERIC = 8,           // 0000.1000
+    FORMAT = 16,                // 0001.0000
+    WHITESPACE = 32,            // 0010.0000
+    SPECIAL = 64,               // 0100.0000
+    NON_VALID = 128             // 1000.0000
 } ascii_type;
 
 const ascii_type char_type[128] = 
@@ -87,7 +87,7 @@ ascii_type cstr_type(char *s) { //return compund type?
     }
     return compound_type;
 }
-
+2
 _Bool valid_char(char c) {
     return char_type[c] != NON_VALID;
 }

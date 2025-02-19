@@ -1,0 +1,16 @@
+a := 6                      ->  int32_t a = 6;
+
+
+
+
+
+
+
+
+
+
+------------------STRING---------------------
+
+s := "Hello World!"         ->  abaStr s = abaStr_BUILD("Hello World!");
+
+                                where abaStr_BUILD()
