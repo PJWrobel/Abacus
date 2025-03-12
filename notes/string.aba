@@ -1,7 +1,10 @@
-type CString (
-    string: vec<u8>
-){
-    .from(s: String){
-        .init(s.n +1)
-    }
+type String ( s: vec<u8mo>) {}
+
+
+
+
+type CString ( str: vec<u8> ){
+	.to(String) -> String {
+		-> {str}
+	}
 }
