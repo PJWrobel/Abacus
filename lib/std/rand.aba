@@ -1,0 +1,6 @@
+#include <rand.h>
+
+def Rand {
+    
+    .rand() -> u64
+}
