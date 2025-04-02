@@ -1,5 +1,0 @@
-String formatting
-
-format(pattern: Str, ..) -> Str {
-    
-}
