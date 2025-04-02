@@ -25,21 +25,17 @@ built-in data types:
     char, String, str //String := [arr_size: int, resizeable_arr: [char], n: u32]
 
 '.': Self
-'T': Generic
-'V': Void
-'E': Enum
-'TU': Tuple
 
 container types
 
 {}:
 Behaves as an enum when no types are associated:
-state := E{
+enum state {
   slow, 
   fast, 
   idle,
   dead //comma at end?
-};
+}
 
 Behaves as a type when all states are of one type:
 
@@ -52,10 +48,12 @@ move := {
 
 ip_version := {iPv4,iPv6}; 
 
-(): Tuple
-() behaves as a TODO
+(foo, bar): Tuple
+() behaves as (void)
 (oneType) behaves as that type, can be used as a cast
-pow -> (Ret, Err) {}
+pow -> (f64, Err) {} //golang type error handling
+pow -> Result<f64, Std::Math::fp_err> {..}
+pow -> i32 {..}
 
 []: "container" type, [0..10] range type? for i in [0..10] {
   arr: [5]<i32> //5 i32's are contained within
@@ -70,8 +68,6 @@ pow -> (Ret, Err) {}
     id = 5
   ]
 <>:
-every function and type is a definition and all definitions have methods, methods can be used as traits such as:
-A function is only a class of methods
 
 -------------methods--------------
 
@@ -124,45 +120,6 @@ r3: &$;
 r4: &#;
 
 
-------------syntaxes--------------
-
-A syntax $ can be implemented so to make a sort of metaprogramming
-
-def name<type>$
-
-def char: u8 {
-    impl $ { //implements a syntax where self ()
-        
-    }
-    
-}
-def String: (...) {
-    impl new { //self always available
-    }
-    impl $ "S|T" -> Option<S> { //S is self typename, ie String, T is some other type we can use to match(T)
-        var return: Option<S>; //this line is implicit
-    }
-	match T {
-	    str:
-		
-	    &str:
-	    char:
-	}
-}
-
-An "S|T" would mean any edge '|' of rudimentary containers S preceeding T ie. (S)T,S(T),{S}(T),S T
-
-Could make a call
-
-def i32 {
-    impl $ S?T"[S]==[T]" -> bool { //type profiles: S?T: can be "S,T", "T,S", or "S,S" but not "T,T"
-        return = !(bool)(S ^ T); //? do generics implicitly call their type?
-	} //remember {is an enum}.
-    }
-    impl bool { //type not specified but because it already implements the type "bool", 
- 	
-}
-
 5.bool
 (bool)5
 bool 5
@@ -206,13 +163,6 @@ enumeration of syntax matches?
 if 1 > 5 {
     
 }
-
-def while {
-    impl $
-}
-
-(if
-)
 
 def hash_map<T,K> (
         

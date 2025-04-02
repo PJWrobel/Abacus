@@ -6,8 +6,8 @@ Abacus: a low-level language built for the modern age of productivity and ease o
 - built-in strings
 - generics, traits
 - safe memory management, implicit free for certain patterns, GC when patrterns can not be proven, smart pointers for -GC:none, raw pointers available and treated same but without memory checks
-- intuitive error handling and default null safety, strongly based off rust: Option<>, Result, Panic(), Expect(), "?" features
-- easy C library imports, hopefully dynamic linking implemented
+- intuitive error handling and default null safety, strongly based off rust: Option<>, Result, Panic(), Expect(), "?" features "!" syntax to force unwrap.
+- easy C FFI and library imports, hopefully dynamic linking implemented
 - syntax based off Rust, C, Go, Nim
 
 Features ranging from most important to nice-to-haves
@@ -22,11 +22,51 @@ i
     ){
         .new() -> User {...}   methods implemented with '.' prefix
         .update() {...}
-        .FREE() {...}          language defined functions in UPPERCASE
-        .TO<Str> {...}         called implicitly when used in print functions
-        .TO<Str> {...}          debugging tools built in
+        .FREE() {...}          language built-in defined functions in UPPERCASE
+        .to<Str> {...}         called implicitly when used in print functions
+        .TO<Str> {...}         debugging tools built in
     }
-2.Generics: 
-    add(a: T, b: T) -> T { implicit trait use
-        -> a + b;
+2.Generics: All generic types and functions are compiled to their types. With transpilation to C library, (void*) are used with ALL possible type cases being compiled [CAUTION].
+    add(a: T, b: T) -> T { implicit trait usage
+        -> a + b; //operator overloading only possible when a.add(b) is able to be inlined. No implicit function calls.
+        //-> a.add(b); //would be necessary if inlining was not possible.
     }
+
+    def point<T> (
+        x: T,
+        y: T,
+    ) {
+        .addeq(b: point<T>) {
+            x += b.x;
+            y += b.y;
+        }
+        .add(a: self, b: .T) -> .T {
+            -> (x + b.x, y + b.y)
+        }
+
+
+    }
+//therefore,
+
+a: point<i32> = (3,7);
+b: point<132> = (6,3);
+c := a + b;
+
+is transpiled to:
+
+typedef struct point_i32_T {
+    i32 x;
+    i32 y;
+};
+
+point point_i32_T_add(point* self, i32 b) {
+    self->x += b.x;
+    self->y += b.y;
+}
+
+int main() {
+    point_i32_T a = {3,7};
+    point_i32_T b = {6,3};
+
+    point_i32_T c = {a.x + b.x, a.y + b.y};
+}
