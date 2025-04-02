@@ -15,37 +15,38 @@ relies on aba's allocator, program runs once. only for bootstrap build
 #define CSTR_MAX_LEN 1000
 
 typedef enum ascii_type { //value used for field mask compatibility. DO NOT TOUCH. powers of 2 are masks
-    null_char = 0,              // 0000.0000
-    digit = 9,                  // 0000.1001
-    lower = 13,                 // 0000.1101
-    upper = 15,                 // 0000.1111
-    whitespace_formatter = 49,  // 0011.0001
-    symbol = 65,                // 0100.0001
-    space = 97,                 // 0110.0001
-//----masks----
-    VALID = 1,                  // 0000.0001
-    ALPHA = 4,                  // 0000.0100
-    ALPHANUMERIC = 8,           // 0000.1000
-    FORMAT = 16,                // 0001.0000
-    WHITESPACE = 32,            // 0010.0000
-    SPECIAL = 64,               // 0100.0000
-    NON_VALID = 128             // 1000.0000
+    //----masks----
+    PSTR_VALID =         1,          // ...................................... 0000.0001
+    PSTR_ALPHA =         1 << 2,     // ...................................... 0000.0100
+    PSTR_ALPHANUMERIC =  1 << 3,     // ...................................... 0000.1000
+    PSTR_FORMAT =        1 << 4,     // ...................................... 0001.0000
+    PSTR_WHITESPACE =    1 << 5,     // ...................................... 0010.0000
+    PSTR_SPECIAL =       1 << 6,     // ...................................... 0100.0000
+    PSTR_NON_VALID =     1 << 7,     // ...................................... 1000.0000
+    //----fields----
+    pstr_null_char = 0,    // ................................................ 0000.0000
+    pstr_digit = PSTR_ALPHANUMERIC | PSTR_VALID,    // ....................... 0000.1001
+    pstr_lower = PSTR_ALPHANUMERIC | PSTR_ALPHA | PSTR_VALID,    // .......... 0000.1101
+    pstr_upper = PSTR_ALPHANUMERIC | PSTR_ALPHA | PSTR_VALID | 2,    // ...... 0000.1111
+    pstr_whitespace_formatter = PSTR_FORMAT | PSTR_WHITESPACE | PSTR_VALID, // 0011.0001
+    pstr_symbol = PSTR_SPECIAL | PSTR_VALID,    // ........................... 0100.0001
+    pstr_space = PSTR_SPECIAL | PSTR_WHITESPACE | PSTR_VALID     // .......... 0110.0001
 } ascii_type;
 
 const ascii_type char_type[128] = 
-    { ['A'...'Z'] = upper,
-      ['a'...'z'] = lower,
-      ['0'...'9'] = digit,
-      ['!'...'/'] = symbol,
-      [':'...'@'] = symbol,
-      ['['...'`'] = symbol,
-      ['{'...'~'] = symbol,
-      [' ']       = space,
-      ['\t']      = whitespace_formatter,
-      ['\n']      = whitespace_formatter,
-      ['\0']      = null_char,
-      [1 ... 8]   = NON_VALID,
-      [11 ... 31] = NON_VALID
+    { ['A'...'Z'] = pstr_upper,
+      ['a'...'z'] = pstr_lower,
+      ['0'...'9'] = pstr_digit,
+      ['!'...'/'] = pstr_symbol,
+      [':'...'@'] = pstr_symbol,
+      ['['...'`'] = pstr_symbol,
+      ['{'...'~'] = pstr_symbol,
+      [' ']       = pstr_space,
+      ['\t']      = pstr_whitespace_formatter,
+      ['\n']      = pstr_whitespace_formatter,
+      ['\0']      = pstr_null_char,
+      [1 ... 8]   = PSTR_NON_VALID,
+      [11 ... 31] = PSTR_NON_VALID
     };
 
 typedef struct pstr {
@@ -81,15 +82,15 @@ int pstr_msb(int n) { //most significant bit
 ascii_type cstr_type(char *s) { //return compund type?
     ascii_type compound_type = 0;
     for(;*s;s++) {
-        if(char_type[*s] == NON_VALID)
-            return NON_VALID;
+        if(char_type[*s] == PSTR_NON_VALID)
+            return PSTR_NON_VALID;
         compound_type |= char_type[*s];
     }
     return compound_type;
 }
-2
+
 _Bool valid_char(char c) {
-    return char_type[c] != NON_VALID;
+    return char_type[c] != PSTR_NON_VALID;
 }
 
 _Bool valid_cstr(char *s) {
@@ -101,7 +102,7 @@ _Bool valid_cstr(char *s) {
         if(i >= CSTR_MAX_LEN)
             return false;
     }
-    return cstr_type(s) != NON_VALID;
+    return cstr_type(s) != PSTR_NON_VALID;
 }
 
 pstr cstr_to_p(char* s) {
@@ -142,55 +143,56 @@ pstr pstr_slice(pstr s, int head, int tail) {
 }
 
 pstr pstr_remove_whitespace(pstr s) {
-    if((char_type[*s.str] & WHITESPACE == 0) && (char_type[s.str[s.n-1]] & WHITESPACE == 0))
+    if((char_type[*s.str] & PSTR_WHITESPACE == 0) && (char_type[s.str[s.n-1]] & PSTR_WHITESPACE == 0))
         return s;
     int head;
     int tail;
-    for(head = 0; char_type[s.str[head]] & WHITESPACE; head++);
-    for(tail = s.n-1; char_type[s.str[tail]] & WHITESPACE; tail--)
+    for(head = 0; char_type[s.str[head]] & PSTR_WHITESPACE; head++);
+    for(tail = s.n-1; char_type[s.str[tail]] & PSTR_WHITESPACE; tail--)
     
     return pstr_slice(s, head, tail);
 }
 
 int pstr_cmp(pstr s1, pstr s2) { //CAUTION: same behavior as strcmp() 
-                                     //HOWEVER upper < lower, ie. pstr_cmp("A","a") -> -1
+                                     //HOWEVER pstr_upper < pstr_lower, ie. pstr_cmp("A","a") -> -1
     s1 = pstr_remove_whitespace(s1);
     s2 = pstr_remove_whitespace(s2);
 
     int i;
 
     for(i=0; s1.str[i] == s2.str[i]; i++) {
-        if(s1.n <= i || s2.n <= i) {
+        if(s1.n <= i || s2.n <= i)
             if(s1.n == i && s2.n == i)
                 return 0;
-            if(s1.n == i)
-                return -1;
-            if(s2.n == i)
-                return 1;
-        }
-        if(char_type[s1.str[i]] & ALPHANUMERIC == 0 &&
-           char_type[s1.str[i]] & SPECIAL == 0)
+
+        if(char_type[s1.str[i]] & PSTR_ALPHANUMERIC == 0 &&
+           char_type[s1.str[i]] & PSTR_SPECIAL == 0)
             return 0;
     }
-    // is VALID and not end of strings
+    if(s1.n == i)
+        return -1;
+    if(s2.n == i)
+        return 1;
+    // is PSTR_VALID and not end of strings
 
-    char sort_precedence(char c) { // {space,symbol,[2..11] = '0'..'9',A,a,B,b,C,c...}
+    char sort_precedence(char c) { // {pstr_space,pstr_symbol,[2..11] = '0'..'9',A,a,B,b,C,c...}
         switch(char_type[c]) {
-            case lower:
+            case pstr_lower:
                 return (c - 'a') * 2 + 13;
-            case upper:
+            case pstr_upper:
                 return (c - 'A') * 2 + 12;
-            case digit:
+            case pstr_digit:
                 return (c - '0') + 2;
-            case symbol:
+            case pstr_symbol:
                 return 1;
-            case space:
+            case pstr_space:
                 return 0;
             default:
-                fprintf(stderr, "Error: sort_precedence(char) incompatable type");
+                fprintf(stderr, "Error: sort_precedence(char) incompatable type: \"%c\":%d in %s , %s  ", c, c, pstr_to_c(s1), pstr_to_c(s2));
                 return 0;
         }
     }
+    
     return sort_precedence(s1.str[i]) - sort_precedence(s2.str[i]);
 }
 
@@ -204,11 +206,11 @@ pstr pstr_concat(pstr s1, pstr s2) {
 }
 
 int main() { // testing
-    char *mystr1 = "     Hello World! ";
-    char *mystr2 = "Hello World";
-    char *mystr3 = "`1234567890-=qwertyuiop[]asdfghjkl;'zxcvbnm,./~!@#$%^&*()_+QWERTYUIOP{}ASDFGHJKL:|ZXCVBNM<>?";
+    char* mystr1 = "     Hello World! ";
+    char* mystr2 = "Hello World";
+    char* mystr3 = "`1234567890-=qwertyuiop[]asdfghjkl;'zxcvbnm,./~!@#$%^&*()_+QWERTYUIOP{}ASDFGHJKL:|ZXCVBNM<>?";
     pstr s1 = cstr_to_p(mystr1);
     pstr s2 = cstr_to_p(mystr2);
+    pstr s3 = cstr_to_p(mystr3);
     printf("%d\n", pstr_cmp(s1,s2));
-
 }
