@@ -11,8 +11,35 @@ Abacus: a low-level language built for the modern age of productivity and ease o
 - syntax based off Rust, C, Go, Nim
 
 Features ranging from most important to nice-to-haves
-i
-1. Structures: easily translatable to C, '.' implilcitly representing "this".
+
+----------------------------- TYPES -------------------------------
+
+primitives: 
+    numbers: 18, i16, i32, i64, u8, u16, u32, u64, f16, f32, f64
+    logic: bool
+    strings: str, String, char
+
+a := 5 //i32 implicit
+b: i16 = 6 //similar to golang
+c: char = 'a'
+
+
+arr := ([5]){0} //([5]) is a cast of {} to a generic array of 5 items with type ([]){T}
+arr2 := ([]){[1..5] = 0} //arr2.n is the largest index initialized +1 (5) when the array size is not given
+arr3: [] = {'a'}; //type [] is defined therefore no := (define as).
+
+---------------------------CHARS/STRINGS-----------------------------
+
+d: u32 = 'd' //implicit cast from char to u32
+buffer := "Hello!" //buffer is of type const char[], mutating const results in error, has member .n useable for compile-time
+buffer: [20] = "Hello" //implicit conversion to a mutable arr on stack, also works with buffer[]
+buffer: * = "Hello" //heap allocated, null terminated, .sizeof -> sizeof(char*), .N -> heap allocation size
+string: String = "Hello" //stack struct {arr: *char, strlen: int, n: int} arr on heap
+s: Str = "Hello" //stack struct {arr: *char, n} n is always implicitly a size_t
+
+
+
+1. Structures: easily translatable to C, '.' representing "this".
 
     struct User (
         active: bool,          rust-like syntax, parentesis over brackets for field definitions
@@ -67,6 +94,5 @@ point point_i32_T_add(point* self, i32 b) {
 int main() {
     point_i32_T a = {3,7};
     point_i32_T b = {6,3};
-
     point_i32_T c = {a.x + b.x, a.y + b.y};
 }
