@@ -1,0 +1,76 @@
+/*
+* Big number library: 
+*
+*/
+
+use Std::{Cmp, String, Err}
+
+struct Big (
+    num: Vec<u32>,
+    max: i32
+) {
+    .iter(.) -> .num.iter()
+
+    .cmp(., b) -> Cmp::Comparator {
+        -> if Cmp::cmp(.num.n, b.num.n) != Eq
+
+        for i in .iter()
+            -> if Cmp::cmp(.num[i], b.num[i]) != Eq
+        -> Eq
+    }
+
+    .add_u32(., b: u32) {
+        carry := b
+        for (i, &adder) in .iter() while carry != 0 {
+            temp: u64 = adder + carry
+            adder = temp!
+            carry = (temp >> 32)!
+        }
+        if carry
+            .num.push(carry)
+    }
+    
+    .add(., b) {
+        carry: u32 = 0;
+        for i in .num while 
+    }
+    
+    .sub(b)
+    
+    .rshift(.) {
+        
+    }
+    
+    .lshift(.) {
+        carry: i32 = false
+
+        for &num in .iter() { 
+            carry_new := num & (1 << 31)
+            num <<= 1
+            num += carry_prev
+            if carry_temp
+                carry = 1
+        }
+        if carry
+            .num.push(carry)
+    }
+    
+    .mult_u32()
+    
+    .mult()
+    
+    .divide()
+    
+    .from(s: String, base: int) -> Result<Big, Err> {
+        s.trim()?
+        String::Base::check_string(s,base)?
+
+        new_big := Big::new()
+
+        for c in s {
+            new_big *= base
+            new_big += String::Base::char_to_num(c)! //pre-checked
+        }
+        -> new_big
+    }
+}
