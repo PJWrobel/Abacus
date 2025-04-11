@@ -11,8 +11,17 @@
 #define i64 int64_t
 #define u64 uint64_t
 
+//--------------------------ABA_CMP----------------------------
 
-//----------------------------static pool allocator-------------------------------
+enum aba_cmp {
+    less = -1,
+    eq = 0,
+    greater = 1
+};
+
+#define ABA_CMP(A,B) ( A == B ? eq : A < B ? less : greater )
+
+//----------------------------static pool allocator----------------------------
 
 #include <stddef.h>
 #include <string.h>
