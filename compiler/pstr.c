@@ -1,7 +1,7 @@
 /*
 pstr.c 
-custom static C string library
-relies on aba's allocator, program runs once. only for bootstrap build
+custom static? C string library
+fully implemented on stack memory, no malloc or free, program runs once. only for bootstrap build
 */
 
 #include <stdio.h>
@@ -11,8 +11,10 @@ relies on aba's allocator, program runs once. only for bootstrap build
 
 #include "abautils.h"
 
-#define PSTR_MIN_SIZE 8 //some 2^x
-#define CSTR_MAX_LEN 1000
+#define PSTR_MAX 1000
+#define CSTR_MAX_LEN 1001
+
+#define CSTR_ITER(S) ;*s;s++
 
 typedef enum ascii_type { //value used for field mask compatibility. DO NOT TOUCH. powers of 2 are masks
     //----masks----
@@ -51,32 +53,15 @@ const ascii_type char_type[128] =
 
 typedef struct pstr {
     size_t n;
-    size_t max;
-    char* str;
+    char str[PSTR_MAX];
 }pstr;
 
 pstr pstr_new() {
-    return (pstr){0, PSTR_MIN_SIZE, malloc(PSTR_MIN_SIZE)};
-}
-
-_Bool pstr_free(pstr* s) {
-    if(s->str == NULL)
-        return false;
-    free(s->str);
-    return true;
+    return (pstr){0,{0}};
 }
 
 void pstr_print(pstr s) {
     printf("%.*s\n", (int)s.n, s.str);
-}
-
-int pstr_msb(int n) { //most significant bit
-    if(n <= 8)
-        return 8;
-    int msb = 0;
-    for(;n;n >>= 1)
-        msb++;
-    return 1 << msb;
 }
 
 ascii_type cstr_type(char *s) { //return compund type?
@@ -109,13 +94,10 @@ pstr cstr_to_p(char* s) {
     if(!valid_cstr(s))
         return pstr_new();
 
-    size_t s_len = strlen(s);
-    size_t s_max = pstr_msb(s_len);
-    char *str;
-
-    str = malloc(s_max);
-    memcpy(str, s, s_len);
-    return (pstr){s_len, s_max, str};
+    pstr new_pstr = pstr_new();
+    new_pstr.n = strlen(s);
+    memcpy(new_pstr.str, s, new_pstr.n);
+    return new_pstr;
 }
 
 char* pstr_to_c(pstr s) {
@@ -125,21 +107,11 @@ char* pstr_to_c(pstr s) {
     return cstr;
 }
 
-pstr pstr_copy(pstr s) {
-    while(s.n < s.max/2)
-        s.max /= 2;
-    char *new_str = malloc(s.max);
-    memcpy(new_str, s.str, s.n);
-    s.str = new_str;
-    return s; //copy of all other fields
-}
-
 pstr pstr_slice(pstr s, int head, int tail) {
-    int len = tail - head;
-    int max = pstr_msb(len);
-    char *new = malloc(max);
-    memcpy(new, s.str + head, len);
-    return (pstr){len, max, new};
+    pstr new_pstr;
+    new_pstr.n = tail-head +1;
+    memcpy(new_pstr.str, &s.str[head], new_pstr.n);
+    return new_pstr;
 }
 
 pstr pstr_remove_whitespace(pstr s) {
@@ -196,13 +168,10 @@ int pstr_cmp(pstr s1, pstr s2) { //CAUTION: same behavior as strcmp()
     return sort_precedence(s1.str[i]) - sort_precedence(s2.str[i]);
 }
 
-pstr pstr_concat(pstr s1, pstr s2) {
+pstr pstr_concat(pstr s1, pstr s2) { //TODO: TEST
     int len = s1.n + s2.n;
-    int max = pstr_msb(len);
-    char *str = malloc(max);
-    memcpy(str, s1.str, s1.n);
-    memcpy(str + s1.n, s2.str, s2.n);
-    return (pstr){len,max,str};
+    memcpy(&s1.str[s1.n], s2.str, s2.n);
+    return s1;
 }
 
 int main() { // testing
