@@ -110,7 +110,7 @@ char* pstr_to_c(pstr s) {
 pstr pstr_slice(pstr s, int head, int tail) {
     pstr new_pstr;
     new_pstr.n = tail-head +1;
-    memcpy(new_pstr.str, &s.str[head], new_pstr.n);
+    memcpy(new_pstr.str, s.str + head, new_pstr.n);
     return new_pstr;
 }
 
@@ -120,7 +120,7 @@ pstr pstr_remove_whitespace(pstr s) {
     int head;
     int tail;
     for(head = 0; char_type[s.str[head]] & PSTR_WHITESPACE; head++);
-    for(tail = s.n-1; char_type[s.str[tail]] & PSTR_WHITESPACE; tail--)
+    for(tail = s.n-1; char_type[s.str[tail]] & PSTR_WHITESPACE; tail--);
 
     return pstr_slice(s, head, tail);
 }
@@ -160,7 +160,7 @@ int pstr_cmp(pstr s1, pstr s2) { //CAUTION: same behavior as strcmp()
             case pstr_space:
                 return 0;
             default:
-                fprintf(stderr, "Error: sort_precedence(char) incompatable type: \"%c\":%d in %s , %s  ", c, c, pstr_to_c(s1), pstr_to_c(s2));
+                fprintf(stderr, "Error: sort_precedence(char) incompatable type:\n\"%c\":%d at %d in %s , %s  ", c, c, i, pstr_to_c(s1), pstr_to_c(s2));
                 return 0;
         }
     }
@@ -175,7 +175,7 @@ pstr pstr_concat(pstr s1, pstr s2) { //TODO: TEST
 }
 
 int main() { // testing
-    char* mystr1 = "     Hello World! ";
+    char* mystr1 = "    Hello World!         ";
     char* mystr2 = "Hello World";
     char* mystr3 = "`1234567890-=qwertyuiop[]asdfghjkl;'zxcvbnm,./~!@#$%^&*()_+QWERTYUIOP{}ASDFGHJKL:|ZXCVBNM<>?";
     pstr s1 = cstr_to_p(mystr1);
