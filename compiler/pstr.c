@@ -160,7 +160,7 @@ int pstr_cmp(pstr s1, pstr s2) { //CAUTION: same behavior as strcmp()
             case pstr_space:
                 return 0;
             default:
-                fprintf(stderr, "Error: sort_precedence(char) incompatable type:\n\"%c\":%d at %d in %s , %s  ", c, c, i, pstr_to_c(s1), pstr_to_c(s2));
+                fprintf(stderr, "Error: sort_precedence(char) incompatable type: \"%c\":%d at %d in %s , %s  ", c, c, i, pstr_to_c(s1), pstr_to_c(s2));
                 return 0;
         }
     }
